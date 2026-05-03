@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tracing-node
+  labels:
+    app: tracing-node
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tracing-node
+  template:
+    metadata:
+      labels:
+        app: tracing-node
+    spec:
+      containers:
+      - name: tracing-node
+        image: 395380602553.dkr.ecr.us-east-1.amazonaws.com/lab/tracing-node:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: OTEL_SERVICE_NAME
+          value: "tracing-node-service"
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://otel-collector:4318"
+        - name: OTEL_TRACES_EXPORTER
+          value: "otlp"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tracing-node
+spec:
+  selector:
+    app: tracing-node
+  ports:
+    - protocol: TCP
+      port: 8081
+      targetPort: 8081
+  type: ClusterIP

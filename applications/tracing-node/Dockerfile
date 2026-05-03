@@ -14,7 +14,7 @@ RUN npm install
 COPY . ./
 
 # Expondo a porta que a aplicação irá utilizar
-EXPOSE 8080
+EXPOSE 8081
 
-# Comando para iniciar a aplicação
-CMD ["npx", "ts-node", "--require", "./instrumentation.ts", "app.ts"]
+# Comando para iniciar a aplicação usando o registro do ts-node diretamente
+CMD ["node", "-r", "ts-node/register", "-r", "./instrumentation.ts", "app.ts"]
