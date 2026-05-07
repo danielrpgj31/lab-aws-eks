@@ -32,37 +32,53 @@ kubectl apply -f k8s/otel-collector.yaml
 
 ---
 
-## 🛠️ Build e Push das Aplicações (ECR)
+## 🐳 Teste Local com Docker Compose
 
-Substitua `395380602553` pelo seu ID de conta AWS e `us-east-1` pela sua região.
+A forma mais simples de testar a comunicação entre as apps e o envio de traces antes de subir para a AWS é usando o Docker Compose.
 
-### Login e Criação de Repositórios
+### Como rodar:
 ```bash
-# Login
-aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin 395380602553.dkr.ecr.us-east-1.amazonaws.com
-
-# Criar repositórios (uma única vez)
-aws ecr create-repository --repository-name lab/customer-service --region us-east-1
-aws ecr create-repository --repository-name lab/tracing-node --region us-east-1
+# Na raiz do projeto
+docker compose up --build
 ```
 
-### Aplicação Java (Customer Service)
+### O que testar:
+1. **Chamada Java -> Node**: `curl "http://localhost:8080/trace?name=LocalTest"`
+2. **Interface do Jaeger**: Acesse `http://localhost:16686` para ver os traces locais.
+
+---
+
+## 💻 Teste Local com Kubernetes (Docker Desktop / WSL2)
+
+Se você estiver utilizando Docker Desktop com Kubernetes habilitado no Windows 11, utilize os manifestos preparados para imagens locais.
+
+### 1. Build das Imagens Locais
+Certifique-se de gerar as imagens com as tags corretas:
 ```bash
-cd applications/customer-service
-chmod +x mvnw
-./mvnw clean package
-cd ../..
+# Customer Service (Java)
+cd applications/customer-service && ./mvnw clean package && cd ../..
 docker build -t lab/customer-service ./applications/customer-service
-docker tag lab/customer-service:latest 395380602553.dkr.ecr.us-east-1.amazonaws.com/lab/customer-service:latest
-docker push 395380602553.dkr.ecr.us-east-1.amazonaws.com/lab/customer-service:latest
+
+# Tracing Node (Node.js)
+docker build -t lab/tracing-node ./applications/tracing-node
 ```
 
-### Aplicação Node.js (Tracing Node)
+### 2. Execução no Kubernetes Local
+Aplique os manifestos da pasta `k8s/local`:
 ```bash
-docker build -t lab/tracing-node ./applications/tracing-node
-docker tag lab/tracing-node:latest 395380602553.dkr.ecr.us-east-1.amazonaws.com/lab/tracing-node:latest
-docker push 395380602553.dkr.ecr.us-east-1.amazonaws.com/lab/tracing-node:latest
+# Infraestrutura base (Jaeger e OTel)
+kubectl apply -f k8s/jaeger.yaml
+kubectl apply -f k8s/otel-collector.yaml
+
+# Aplicações com imagens locais
+kubectl apply -f k8s/local/customer-service.yaml
+kubectl apply -f k8s/local/tracing-node.yaml
 ```
+
+---
+
+Para o procedimento detalhado de geração de imagens e ajustes para Amazon, consulte:
+- [Guia de Deploy no Amazon ECR e Ajustes Kubernetes](ECR-DEPLOYMENT.md)
 
 ---
 

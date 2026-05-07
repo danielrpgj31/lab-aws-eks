@@ -1,0 +1,46 @@
+services:
+  jaeger:
+    image: jaegertracing/all-in-one:1.62.0
+    ports:
+      - "16686:16686" # UI
+      - "4317:4317"  # OTLP gRPC
+      - "4318:4318"  # OTLP HTTP
+
+  otel-collector:
+    image: otel/opentelemetry-collector:latest
+    command: ["--config=/etc/otel-config.yaml"]
+    volumes:
+      - ./opentelemetry-collector/otel-config.yaml:/etc/otel-config.yaml
+    ports:
+      - "4319:4317" # OTLP gRPC (mapeado para 4319 local para não conflitar com Jaeger)
+      - "4320:4318" # OTLP HTTP
+    depends_on:
+      - jaeger
+
+  tracing-node:
+    image: 395380602553.dkr.ecr.us-east-1.amazonaws.com/lab/tracing-node:latest
+    build:
+      context: ./applications/tracing-node
+    environment:
+      - OTEL_SERVICE_NAME=tracing-node-service
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+    ports:
+      - "8081:8081"
+    depends_on:
+      - otel-collector
+
+  customer-service:
+    image: 395380602553.dkr.ecr.us-east-1.amazonaws.com/lab/customer-service:latest
+    build:
+      context: ./applications/customer-service
+    environment:
+      - OTEL_SERVICE_NAME=customer-services
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+    ports:
+      - "8080:8080"
+    depends_on:
+      - otel-collector
+      - tracing-node

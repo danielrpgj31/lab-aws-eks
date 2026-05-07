@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package tracing;
+
+option java_package = "br.com.descompile.customer_service.grpc";
+option java_multiple_files = true;
+
+service TracingService {
+  rpc GetTrace (TraceRequest) returns (TraceResponse);
+}
+
+message TraceRequest {
+  string name = 1;
+}
+
+message TraceResponse {
+  string message = 1;
+}

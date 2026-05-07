@@ -16,7 +16,8 @@ spec:
     spec:
       containers:
       - name: tracing-node
-        image: 395380602553.dkr.ecr.us-east-1.amazonaws.com/lab/tracing-node:latest
+        image: lab/tracing-node:latest
+        imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8081
         - containerPort: 50051

@@ -13,9 +13,8 @@ CMD java \
     -javaagent:./opentelemetry-javaagent.jar \
     -Dotel.service.name=customer-services \
     -Dotel.traces.exporter=otlp \
-    -Dotel.exporter.otlp.endpoint=http://telemetry-collector:4318 \
+    -Dotel.exporter.otlp.endpoint=http://otel-collector:4318 \
     -Dotel.metrics.exporter=none \
     -Dotel.exporter.otlp.protocol=http/protobuf \
     -Dotel.logs.exporter=none \
-    -Dotel.javaagent.debug=true \
     -jar customer-service-0.0.1-SNAPSHOT.jar
