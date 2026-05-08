@@ -1,0 +1,37 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tracing-ingress-grpc
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "GRPC"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: tracing.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tracing-node
+            port:
+              number: 50051
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: tracing-ingress-rest
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: tracing-rest.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: tracing-node
+            port:
+              number: 8081

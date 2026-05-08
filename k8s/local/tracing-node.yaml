@@ -5,7 +5,7 @@ metadata:
   labels:
     app: tracing-node
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
       app: tracing-node
@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
       - name: tracing-node
-        image: lab/tracing-node:latest
-        imagePullPolicy: IfNotPresent
+        image: lab/tracing-node:v2
+        imagePullPolicy: Always
         ports:
         - containerPort: 8081
         - containerPort: 50051

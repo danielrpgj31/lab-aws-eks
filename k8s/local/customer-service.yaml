@@ -16,8 +16,8 @@ spec:
     spec:
       containers:
       - name: customer-service
-        image: lab/customer-service:latest
-        imagePullPolicy: IfNotPresent
+        image: lab/customer-service:v2
+        imagePullPolicy: Always
         ports:
         - containerPort: 8080
         env:

@@ -3,13 +3,16 @@ import express, { Express } from 'express';
 import * as grpc from '@grpc/grpc-js';
 import * as protoLoader from '@grpc/proto-loader';
 import path from 'path';
+import os from 'os';
 
 const PORT: number = parseInt(process.env.PORT || '8081');
 const GRPC_PORT: number = parseInt(process.env.GRPC_PORT || '50051');
+const HOSTNAME: string = os.hostname();
 const app: Express = express();
 
 // gRPC Setup
-const PROTO_PATH = path.join(__dirname, 'proto/tracing.proto');
+const PROTO_PATH = path.resolve(__dirname, 'proto', 'tracing.proto');
+console.log(`Loading proto from: ${PROTO_PATH}`);
 const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
   keepCase: true,
   longs: String,
@@ -19,13 +22,19 @@ const packageDefinition = protoLoader.loadSync(PROTO_PATH, {
 });
 const tracingProto: any = grpc.loadPackageDefinition(packageDefinition).tracing;
 
-const server = new grpc.Server();
+const server = new grpc.Server({
+  'grpc.max_receive_message_length': 1024 * 1024 * 4, // 4MB
+  'grpc.max_send_message_length': 1024 * 1024 * 4,    // 4MB
+  'grpc.keepalive_time_ms': 30000,
+  'grpc.keepalive_timeout_ms': 10000,
+  'grpc.keepalive_permit_without_calls': 1,
+});
 
 server.addService(tracingProto.TracingService.service, {
   getTrace: (call: any, callback: any) => {
     const name = call.request.name;
-    console.log(`Received gRPC request for name: ${name}`);
-    callback(null, { message: `Hello ${name} from gRPC Node.js` });
+    console.log(`Received gRPC request for name: ${name} on pod: ${HOSTNAME}`);
+    callback(null, { message: `Hello ${name} from gRPC Node.js [Pod: ${HOSTNAME}]` });
   },
 });
 
@@ -45,8 +54,8 @@ app.get('/health', (req, res) => {
 // Keep the old REST endpoint for reference or migration, but we'll focus on gRPC
 app.get('/trace', (req, res) => {
   const name = req.query.name;
-  console.log(`Received REST request for name: ${name}`);
-  res.send(`Hello ${name} from REST Node.js`);
+  console.log(`Received REST request for name: ${name} on pod: ${HOSTNAME}`);
+  res.send(`Hello ${name} from REST Node.js [Pod: ${HOSTNAME}]`);
 });
 
 app.listen(PORT, () => {

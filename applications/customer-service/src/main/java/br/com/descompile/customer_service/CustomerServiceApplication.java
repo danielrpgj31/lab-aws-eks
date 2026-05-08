@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.client.RestTemplate;
 
 import jakarta.annotation.PostConstruct;
+import java.util.concurrent.TimeUnit;
 
 @SpringBootApplication
 @RestController
@@ -24,9 +25,12 @@ public class CustomerServiceApplication {
 
     @PostConstruct
     public void init() {
-        // Configuração do canal gRPC
+        // Configuração otimizada do canal gRPC
         this.channel = ManagedChannelBuilder.forAddress("tracing-node", 50051)
                 .usePlaintext()
+                .keepAliveTime(30, TimeUnit.SECONDS)
+                .keepAliveTimeout(10, TimeUnit.SECONDS)
+                .keepAliveWithoutCalls(true)
                 .build();
         this.blockingStub = TracingServiceGrpc.newBlockingStub(channel);
     }
